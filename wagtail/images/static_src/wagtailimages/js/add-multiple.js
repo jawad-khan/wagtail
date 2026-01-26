@@ -1,4 +1,142 @@
 $(function () {
+  $('#url-upload-form .replace-file-input').css({
+    display: 'flex',
+    gap: '1rem',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  });
+  $('#image_url').css({
+    minWidth: '300px',
+    maxWidth: '500px',
+  });
+  $('#url-upload-progress .bar').css('width', '100%');
+
+  function handleUrlUpload(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    var form = $('#url-upload-form');
+    var urlInput = $('#image_url');
+    var imageUrl = urlInput.val().trim();
+    var submitButton = $('#url-upload-button');
+    var progressContainer = $('#url-upload-progress');
+
+    if (!imageUrl) {
+      return false;
+    }
+
+    submitButton.prop('disabled', true);
+    progressContainer.removeClass('w-hidden');
+
+    var li = $($('#upload-list-item').html()).addClass('upload-uploading');
+    li.find('.left').append(escapeHtml(imageUrl));
+    $('#upload-list').append(li);
+
+    var formData = new FormData(form[0]);
+
+    $.ajax({
+      url: form.attr('action'),
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      dataType: 'json',
+    })
+      .done(function (response) {
+        var parsedResponse = response;
+
+        if (typeof parsedResponse === 'string') {
+          try {
+            parsedResponse = JSON.parse(parsedResponse);
+          } catch (parseError) {
+            li.removeClass('upload-uploading').addClass(
+              'upload-failure upload-complete',
+            );
+            $('.right .error_messages', li).append(
+              escapeHtml('Invalid response from server.'),
+            );
+            return;
+          }
+        }
+
+        if (parsedResponse && parsedResponse.success) {
+          li.removeClass('upload-uploading').addClass(
+            'upload-success upload-complete',
+          );
+
+          if (parsedResponse.preview_url) {
+            var thumbDiv = li.find('.preview .thumb');
+            thumbDiv.find('.icon').remove();
+            thumbDiv.append($('<img>').attr('src', parsedResponse.preview_url));
+            li.addClass('hasthumb');
+          }
+
+          if (parsedResponse.duplicate) {
+            li.addClass('upload-duplicate');
+            $('.right', li).append(parsedResponse.confirm_duplicate_upload);
+            $('.confirm-duplicate-upload', li).on(
+              'click',
+              '.confirm-upload',
+              function (event) {
+                event.preventDefault();
+                var confirmUpload = $(this).closest(
+                  '.confirm-duplicate-upload',
+                );
+                confirmUpload.remove();
+                $('.right', li).append(parsedResponse.form);
+              },
+            );
+          } else {
+            $('.right', li).append(parsedResponse.form);
+          }
+          urlInput.val('');
+        } else {
+          li.removeClass('upload-uploading').addClass(
+            'upload-failure upload-complete',
+          );
+          var errorMsg =
+            parsedResponse && parsedResponse.error_message
+              ? parsedResponse.error_message
+              : 'Upload failed. Please try again.';
+          $('.right .error_messages', li).append(escapeHtml(errorMsg));
+        }
+      })
+      .fail(function (jqXHR, textStatus, errorThrown) {
+        li.removeClass('upload-uploading').addClass(
+          'upload-server-error upload-complete',
+        );
+        var errorMessage = $('.server-error', li);
+        $('.error-text', errorMessage).text(
+          errorThrown || textStatus || 'Unknown error',
+        );
+        $('.error-code', errorMessage).text(jqXHR.status || 'N/A');
+      })
+      .always(function () {
+        submitButton.prop('disabled', false);
+        progressContainer.addClass('w-hidden');
+      });
+
+    return false;
+  }
+
+  $('#url-upload-form').on('submit', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleUrlUpload(e);
+    return false;
+  });
+
+  // Also handle button click as backup to prevent form submission
+  $('#url-upload-button').on('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleUrlUpload(e);
+    return false;
+  });
+
   $('#fileupload').fileupload({
     dataType: 'html',
     sequentialUploads: true,
