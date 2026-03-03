@@ -50,6 +50,31 @@
                 {% endrawformattedfield %}
             {% endif %}
         </form>
+
+        <div
+            class="w-mt-6 w-border-t w-border-border-furniture w-pt-4"
+            data-controller="w-url-import"
+            data-w-url-import-max-size-value="{{ max_filesize|stringformat:'s'|default:'0' }}"
+            data-w-url-import-accept-value="{{ allowed_extensions|join:',' }}"
+        >
+            <p>{% trans "Or import from URLs" %}</p>
+            <textarea
+                data-w-url-import-target="input"
+                class="w-w-full w-mb-2"
+                rows="3"
+                placeholder="{% trans 'Enter image URLs, one per line' %}"
+            ></textarea>
+            <button
+                type="button"
+                class="button bicolor button--icon button-longrunning"
+                data-action="click->w-url-import#performImport"
+                data-w-url-import-target="submit"
+            >
+                {% icon name="download" wrapped=1 %}
+                <em>{% trans "Import" %}</em>
+            </button>
+            <div data-w-url-import-target="errors" hidden></div>
+        </div>
     </div>
 
     <div id="overall-progress" class="progress progress-secondary">

@@ -3015,6 +3015,59 @@ class TestMultipleImageUploader(AdminTemplateTestUtils, WagtailTestUtils, TestCa
         self.assertNotIn(value, data)
         self.assertIn(escapejs(value), data)
 
+    def test_add_url_import_section_rendered(self):
+        """
+        Verify the multi-add page includes the URL import section with
+        the correct Stimulus controller attributes.
+        """
+        response = self.client.get(reverse("wagtailimages:add_multiple"))
+        self.assertEqual(response.status_code, 200)
+        soup = self.get_soup(response.content)
+
+        url_import_div = soup.select_one('[data-controller="w-url-import"]')
+        self.assertIsNotNone(url_import_div)
+
+        textarea = url_import_div.select_one(
+            'textarea[data-w-url-import-target="input"]'
+        )
+        self.assertIsNotNone(textarea)
+
+        submit_btn = url_import_div.select_one(
+            'button[data-w-url-import-target="submit"]'
+        )
+        self.assertIsNotNone(submit_btn)
+
+        errors_div = url_import_div.select_one(
+            '[data-w-url-import-target="errors"]'
+        )
+        self.assertIsNotNone(errors_div)
+        self.assertTrue(errors_div.has_attr("hidden"))
+
+    @override_settings(WAGTAILIMAGES_MAX_UPLOAD_SIZE=5242880)
+    def test_add_url_import_max_size_value(self):
+        """
+        Verify the URL import controller receives the correct max size.
+        """
+        response = self.client.get(reverse("wagtailimages:add_multiple"))
+        soup = self.get_soup(response.content)
+        url_import_div = soup.select_one('[data-controller="w-url-import"]')
+        self.assertEqual(
+            url_import_div.get("data-w-url-import-max-size-value"), "5242880"
+        )
+
+    def test_add_url_import_accept_value(self):
+        """
+        Verify the URL import controller receives the allowed extensions.
+        """
+        response = self.client.get(reverse("wagtailimages:add_multiple"))
+        soup = self.get_soup(response.content)
+        url_import_div = soup.select_one('[data-controller="w-url-import"]')
+        accept_value = url_import_div.get("data-w-url-import-accept-value")
+        self.assertIsNotNone(accept_value)
+        extensions = accept_value.split(",")
+        self.assertIn("jpg", extensions)
+        self.assertIn("png", extensions)
+
     def test_add_post(self):
         """
         This tests that a POST request to the add view saves the image and returns an edit form
