@@ -33,7 +33,7 @@ from wagtail.images import get_image_model
 from wagtail.images.formats import get_image_format
 from wagtail.images.forms import ImageInsertionForm, get_image_form
 from wagtail.images.permissions import permission_policy
-from wagtail.images.utils import find_image_duplicates
+from wagtail.images.utils import find_image_duplicates, get_allowed_image_extensions
 from wagtail.models import ReferenceIndex
 
 permission_checker = PermissionPolicyChecker(permission_policy)
@@ -57,6 +57,9 @@ class ImageChosenResponseMixin(ChosenResponseMixin):
 
 class ImageCreationFormMixin(CreationFormMixin):
     creation_tab_id = "upload"
+    creation_form_template_name = (
+        "wagtailimages/chooser/creation_form.html"
+    )
     create_action_label = _("Upload")
     create_action_clicked_label = _("Uploading…")
     permission_policy = permission_policy
@@ -76,6 +79,21 @@ class ImageCreationFormMixin(CreationFormMixin):
             kwargs["instance"] = self.model(uploaded_by_user=self.request.user)
 
         return kwargs
+
+    def get_creation_form_context_data(self, form):
+        context = super().get_creation_form_context_data(form)
+        max_upload_size = getattr(
+            settings, "WAGTAILIMAGES_MAX_UPLOAD_SIZE", 10 * 1024 * 1024
+        )
+        context.update(
+            {
+                "url_import_max_size": max_upload_size or 0,
+                "url_import_accept": ",".join(
+                    get_allowed_image_extensions()
+                ),
+            }
+        )
+        return context
 
 
 class BaseImageChooseView(BaseChooseView):

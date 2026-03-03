@@ -34,6 +34,7 @@ import { TeleportController } from './TeleportController';
 import { TooltipController } from './TooltipController';
 import { UnsavedController } from './UnsavedController';
 import { UpgradeController } from './UpgradeController';
+import { UrlImportController } from './UrlImportController';
 import { ZoneController } from './ZoneController';
 
 /**
@@ -77,5 +78,6 @@ export const coreControllerDefinitions: Definition[] = [
   { controllerConstructor: TooltipController, identifier: 'w-tooltip' },
   { controllerConstructor: UnsavedController, identifier: 'w-unsaved' },
   { controllerConstructor: UpgradeController, identifier: 'w-upgrade' },
+  { controllerConstructor: UrlImportController, identifier: 'w-url-import' },
   { controllerConstructor: ZoneController, identifier: 'w-zone' },
 ];

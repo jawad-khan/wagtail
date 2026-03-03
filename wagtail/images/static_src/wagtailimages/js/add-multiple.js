@@ -208,6 +208,13 @@ $(function () {
     });
   });
 
+  document.addEventListener('w-url-import:add', function (event) {
+    var file = event.detail.file;
+    if (file) {
+      $('#fileupload').fileupload('add', { files: [file] });
+    }
+  });
+
   $('#upload-list').on('click', '.delete', function (e) {
     var form = $(this).closest('form');
     var itemElement = form.closest('#upload-list > li');
